@@ -22,3 +22,8 @@ options:
       Supported units: y, w, d, h, m, s.
     type: string
     default: "1m"
+  default_alerts:
+    description: |
+      Whether to transmit loki alert rules and prometheus alert rules.
+    type: boolean
+    default: true

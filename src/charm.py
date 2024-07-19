@@ -285,16 +285,23 @@ class GrafanaAgentMachineCharm(GrafanaAgentCharm):
 
         topology = JujuTopology.from_charm(self)
 
-        # Get the rules defined by Grafana Agent itself.
-        own_rules = AlertRules(query_type="promql", topology=topology)
-        own_rules.add_path(METRICS_RULES_SRC_PATH)
-        if topology.identifier in rules:
-            rules[topology.identifier]["groups"] += own_rules.as_dict()["groups"]
+        if self.include_default_alerts():
+            # Get the rules defined by Grafana Agent itself.
+            own_rules = AlertRules(query_type="promql", topology=topology)
+            own_rules.add_path(METRICS_RULES_SRC_PATH)
+            if topology.identifier in rules:
+                rules[topology.identifier]["groups"] += own_rules.as_dict()["groups"]
+            else:
+                rules[topology.identifier] = own_rules.as_dict()
+
+            return rules
         else:
-            rules[topology.identifier] = own_rules.as_dict()
+            return rules
 
-        return rules
-
+    def include_default_alerts(self) -> bool:
+        """ Whether the charm has been configured to include default metrics. """
+        return self.config.get("default_alerts", True)
+    
     def metrics_jobs(self) -> list:
         """Return a list of metrics scrape jobs."""
         return self._cos.metrics_jobs

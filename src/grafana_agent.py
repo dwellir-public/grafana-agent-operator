@@ -121,8 +121,8 @@ class GrafanaAgentCharm(CharmBase):
             dest=charm_root.joinpath(*DASHBOARDS_DEST_PATH.split("/")),
         )
         self.cert_transfer = CertificateTransferRequires(self, "receive-ca-cert")
-
-        for rules in [self.loki_rules_paths, self.dashboard_paths]:
+            
+        for rules in self.own_copy_paths():
             if not os.path.isdir(rules.dest):
                 shutil.copytree(rules.src, rules.dest, dirs_exist_ok=True)
 
@@ -197,6 +197,13 @@ class GrafanaAgentCharm(CharmBase):
                 for outgoing in outgoing_list:
                     self.framework.observe(self.on[outgoing].relation_joined, self._update_status)
                     self.framework.observe(self.on[outgoing].relation_broken, self._update_status)
+    
+    def own_copy_paths(self):
+        """ Determines whether to copy dashboards and loki alerts or just dashboards. """
+        if self.config.get("default_alerts", True):
+            return [self.loki_rules_paths, self.dashboard_paths]
+        else:
+            return [self.dashboard_paths]
 
     def _on_cert_changed(self, _event):
         """Event handler for cert change."""
